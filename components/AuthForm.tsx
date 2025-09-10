@@ -15,7 +15,10 @@ import { IMAGES_MANIFEST } from "next/dist/shared/lib/constants";
 import { PassThrough } from "stream";
 import FormField from "@/components/FormField";
 import { useRouter } from "next/navigation";
-
+import { auth } from "@/firebase/client";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { signUp } from "@/lib/actions/auth_action";
+import { signIn } from "@/lib/actions/auth_action";
 const authFormSchema = (type: FormType) => {
 
     return z.object({
@@ -38,16 +41,29 @@ const AuthForm = ({ type }: { type: FormType }) => {
     })
 
     // 2. Define a submit handler.
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
             if (type === 'sign-up') {
+                const { name, email, Password } = values;
+                const userCredentials = await createUserWithEmailAndPassword(auth, email, Password);
+                const result = await signUp({ uid: userCredentials.user.uid, name: name!, email, password: Password });
+                if (!result?.success) {
+                    toast.error(result?.message);
+                    return;
+                }
                 toast.success('Account created successfully. Please Sign in.');
                 router.push('/sign-in');
 
             }
             else {
-
-
+                const { email, Password } = values;
+                const userCredentials = await signInWithEmailAndPassword(auth, email, Password);
+                const idToken = await userCredentials.user.getIdToken();
+                if (!idToken) {
+                    toast.error('Sign in failed');
+                    return;
+                }
+                await signIn({ email, idToken });
                 toast.success('Signed in successfully');
                 router.push('/');
             }

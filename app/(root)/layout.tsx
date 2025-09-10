@@ -1,7 +1,11 @@
 import React, { ReactNode } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import Image from "next/image"
+import { redirect } from "next/navigation";
+import { isAuthenticated } from "@/lib/actions/auth_action";
 const RootLayout = ({ children }: { children: ReactNode }) => {
+
+
     return (
         <div className="root-layout">
             <nav>
